@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Financery</a> &gt; <a href="index.source.html" class="el_package">com.example.financery.controller</a> &gt; <span class="el_source">UserController.java</span></div><h1>UserController.java</h1><pre class="source lang-java linenums">package com.example.financery.controller;
+
+
+import com.example.financery.dto.UserDtoRequest;
+import com.example.financery.dto.UserDtoResponse;
+import com.example.financery.model.User;
+import com.example.financery.service.TransactionService;
+import com.example.financery.service.UserService;
+import java.util.List;
+
+import com.example.financery.service.VisitCounterService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+
+@RestController
+@RequestMapping(&quot;/users&quot;)
+@AllArgsConstructor
+@Tag(name = &quot;Пользователи&quot;, description = &quot;Управление пользователями&quot;)
+public class UserController {
+
+    private final UserService userService;
+    private final VisitCounterService visitCounterService;
+    private final TransactionService transactionService;
+
+    @Autowired
+    public UserController(UserService userService,
+                          TransactionService transactionService,
+<span class="fc" id="L33">                          VisitCounterService visitCounterService) {</span>
+<span class="fc" id="L34">        this.userService = userService;</span>
+<span class="fc" id="L35">        this.transactionService = transactionService;</span>
+<span class="fc" id="L36">        this.visitCounterService = visitCounterService;</span>
+<span class="fc" id="L37">    }</span>
+
+    @Operation(
+            summary = &quot;Вывод всех пользователей&quot;,
+            description = &quot;Выводит пользователей и информацию о них&quot;
+    )
+    @GetMapping(&quot;/get-all-users&quot;)
+    public List&lt;UserDtoResponse&gt; getAllUsers() {
+<span class="nc" id="L45">        visitCounterService.increment();</span>
+<span class="nc" id="L46">        return userService.getAllUsers();</span>
+    }
+
+    @Operation(
+            summary = &quot;Поиск пользователя по id&quot;,
+            description = &quot;Выводит пользователя заданного id&quot;
+    )
+    @GetMapping(&quot;/search-by-id/{id}&quot;)
+    public UserDtoResponse getUserById(@PathVariable long id) {
+<span class="nc" id="L55">        return userService.getUserById(id);</span>
+    }
+
+    @Operation(
+            summary = &quot;Поиск пользователя по почте&quot;,
+            description = &quot;Выводит пользователя заданной почты&quot;
+    )
+    @GetMapping(&quot;/search-by-email/{email}&quot;)
+    public User getUserByEmail(@PathVariable String email) {
+<span class="nc" id="L64">        return userService.getUserByEmail(email);</span>
+    }
+
+    @Operation(
+            summary = &quot;Создание пользователя&quot;,
+            description = &quot;Создает пользователя&quot;
+    )
+    @PostMapping(&quot;/create&quot;)
+    public UserDtoResponse createUser(@Valid @RequestBody UserDtoRequest userDtoRequest) {
+<span class="nc" id="L73">        return userService.createUser(userDtoRequest);</span>
+    }
+
+    @Operation(
+            summary = &quot;Обновление пользовательской информации&quot;,
+            description = &quot;Позволяет обновить информацию о пользователе&quot;
+    )
+    @PutMapping(&quot;/update-by-id/{id}&quot;)
+    public UserDtoResponse updateUser(
+            @PathVariable long id,
+            @Valid @RequestBody UserDtoRequest userDtoRequest) {
+<span class="nc" id="L84">        return userService.updateUser(id, userDtoRequest);</span>
+    }
+
+    @Operation(
+            summary = &quot;Удаление пользователя&quot;,
+            description = &quot;Удаляет пользователя по Id&quot;
+    )
+    @DeleteMapping(&quot;/delete-by-id/{id}&quot;)
+    public void deleteUser(@PathVariable long id) {
+<span class="nc" id="L93">        userService.deleteUser(id);</span>
+<span class="nc" id="L94">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

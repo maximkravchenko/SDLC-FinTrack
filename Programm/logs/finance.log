@@ -1,0 +1,35 @@
+2025-04-28T04:10:08.790+03:00  INFO 23708 --- [restartedMain] c.e.financery.FinanceryApplication       : Starting FinanceryApplication using Java 23.0.2 with PID 23708 (C:\Users\MaxiM\IdeaProjects\Financery\target\classes started by MaxiM in C:\Users\MaxiM\IdeaProjects\Financery)
+2025-04-28T04:10:08.791+03:00  INFO 23708 --- [restartedMain] c.e.financery.FinanceryApplication       : No active profile set, falling back to 1 default profile: "default"
+2025-04-28T04:10:09.817+03:00  WARN 23708 --- [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-04-28T04:10:10.812+03:00  INFO 23708 --- [restartedMain] c.example.financery.utils.InMemoryCache  : SimpleLRUCache initialized with max size: 3
+2025-04-28T04:10:11.001+03:00  WARN 23708 --- [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-04-28T04:10:11.662+03:00  INFO 23708 --- [restartedMain] c.e.financery.FinanceryApplication       : Started FinanceryApplication in 2.965 seconds (process running for 267.187)
+2025-04-28T04:11:58.305+03:00  INFO 2164 --- [restartedMain] c.e.financery.FinanceryApplication       : Starting FinanceryApplication using Java 23.0.2 with PID 2164 (C:\Users\MaxiM\IdeaProjects\Financery\target\classes started by MaxiM in C:\Users\MaxiM\IdeaProjects\Financery)
+2025-04-28T04:11:58.308+03:00 DEBUG 2164 --- [restartedMain] c.e.financery.FinanceryApplication       : Running with Spring Boot v3.4.2, Spring v6.2.2
+2025-04-28T04:11:58.309+03:00  INFO 2164 --- [restartedMain] c.e.financery.FinanceryApplication       : No active profile set, falling back to 1 default profile: "default"
+2025-04-28T04:12:02.487+03:00  WARN 2164 --- [restartedMain] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2025-04-28T04:12:06.499+03:00  INFO 2164 --- [restartedMain] c.example.financery.utils.InMemoryCache  : SimpleLRUCache initialized with max size: 3
+2025-04-28T04:12:06.560+03:00  INFO 2164 --- [restartedMain] c.e.financery.aspect.LoggingAspect       : Выполняется: OpenApiConfig.customOpenApi()
+2025-04-28T04:12:06.563+03:00  INFO 2164 --- [restartedMain] c.e.financery.aspect.LoggingAspect       : Выполняется: OpenApiConfig.customOpenApi() с результатом: class OpenAPI {
+    openapi: 3.0.1
+    info: class Info {
+        title: Financery API
+        description: API documentation for Financery API
+        summary: null
+        termsOfService: null
+        contact: null
+        license: null
+        version: 1.0
+    }
+    externalDocs: class ExternalDocumentation {
+        description: GitHub repository
+        url: https://github.com/Max0neS/Financery
+    }
+    servers: null
+    security: null
+    tags: null
+    paths: null
+    components: null
+}
+2025-04-28T04:12:06.768+03:00  WARN 2164 --- [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-04-28T04:12:07.780+03:00  INFO 2164 --- [restartedMain] c.e.financery.FinanceryApplication       : Started FinanceryApplication in 10.49 seconds (process running for 11.812)

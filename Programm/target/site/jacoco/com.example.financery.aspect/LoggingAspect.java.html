@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LoggingAspect.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Financery</a> &gt; <a href="index.source.html" class="el_package">com.example.financery.aspect</a> &gt; <span class="el_source">LoggingAspect.java</span></div><h1>LoggingAspect.java</h1><pre class="source lang-java linenums">package com.example.financery.aspect;
+
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.annotation.AfterReturning;
+import org.aspectj.lang.annotation.AfterThrowing;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+
+import java.util.Collection;
+import java.util.Optional;
+
+@Aspect
+@Component
+<span class="fc" id="L19">public class LoggingAspect {</span>
+<span class="fc" id="L20">    private static final Logger logger = LoggerFactory.getLogger(LoggingAspect.class);</span>
+
+    @Before(&quot;execution(* com.example.financery..*(..)) &quot;
+        + &quot;&amp;&amp; !execution(* com.example.financery.mapper.TransactionMapper.*(..))&quot;)
+    public void logBefore(JoinPoint joinPoint) {
+<span class="pc bpc" id="L25" title="1 of 2 branches missed.">        if (logger.isDebugEnabled()) {</span>
+<span class="fc" id="L26">            logger.info(&quot;Началось выполнение: {}&quot;, joinPoint.getSignature().toShortString());</span>
+        }
+<span class="fc" id="L28">    }</span>
+
+    @AfterReturning(pointcut = &quot;execution(* com.example.financery..*(..)) &quot;
+            + &quot;&amp;&amp; !execution(* com.example.financery.mapper.TransactionMapper.*(..))&quot;,
+            returning = &quot;result&quot;)
+    public void logAfterReturning(JoinPoint joinPoint, Object result) {
+<span class="pc bpc" id="L34" title="1 of 2 branches missed.">        if (logger.isDebugEnabled()) {</span>
+<span class="fc" id="L35">            String resultString = safeToString(result); // Используем безопасный метод</span>
+<span class="pc bpc" id="L36" title="1 of 2 branches missed.">            if (result instanceof ResponseEntity) {</span>
+<span class="nc" id="L37">                ResponseEntity&lt;?&gt; responseEntity = (ResponseEntity&lt;?&gt;) result;</span>
+<span class="nc bnc" id="L38" title="All 2 branches missed.">                if (responseEntity.getStatusCode() == HttpStatus.BAD_REQUEST) {</span>
+<span class="nc" id="L39">                    logger.warn(&quot;Закончилось выполнение: {} с результатом: {}&quot;,</span>
+<span class="nc" id="L40">                            joinPoint.getSignature().toShortString(), resultString);</span>
+<span class="nc" id="L41">                    return;</span>
+                }
+            }
+<span class="fc" id="L44">            logger.info(&quot;Закончилось выполнение: {} с результатом: {}&quot;,</span>
+<span class="fc" id="L45">                    joinPoint.getSignature().toShortString(), resultString);</span>
+        }
+<span class="fc" id="L47">    }</span>
+
+    private String safeToString(Object obj) {
+<span class="pc bpc" id="L50" title="1 of 2 branches missed.">        if (obj == null) {</span>
+<span class="nc" id="L51">            return &quot;null&quot;;</span>
+        }
+        try {
+            // Избегаем вызова toString() на сущностях Hibernate
+<span class="pc bpc" id="L55" title="1 of 2 branches missed.">            if (obj.getClass().getPackageName().startsWith(&quot;com.example.financery.model&quot;)) {</span>
+<span class="nc" id="L56">                return obj.getClass().getSimpleName() + &quot;@&quot;</span>
+<span class="nc" id="L57">                        + Integer.toHexString(System.identityHashCode(obj));</span>
+            }
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">            if (obj instanceof Collection) {</span>
+<span class="nc" id="L60">                return &quot;Collection[size=&quot; + ((Collection&lt;?&gt;) obj).size() + &quot;]&quot;;</span>
+            }
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">            if (obj instanceof Optional) {</span>
+<span class="nc" id="L63">                Optional&lt;?&gt; optional = (Optional&lt;?&gt;) obj;</span>
+<span class="nc" id="L64">                return &quot;Optional[&quot;</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">                        + (optional.isPresent()</span>
+<span class="nc" id="L66">                        ? safeToString(optional.get())</span>
+<span class="nc" id="L67">                        : &quot;empty&quot;) + &quot;]&quot;;</span>
+            }
+<span class="fc" id="L69">            return String.valueOf(obj);</span>
+<span class="nc" id="L70">        } catch (Exception e) {</span>
+<span class="nc" id="L71">            return &quot;FAILED toString(): &quot; + e.getMessage();</span>
+        }
+    }
+
+    @AfterThrowing(pointcut = &quot;execution(* com.example.financery..*(..))&quot;, throwing = &quot;error&quot;)
+    public void logAfterThrowing(JoinPoint joinPoint, Throwable error) {
+<span class="nc bnc" id="L77" title="All 2 branches missed.">        if (logger.isDebugEnabled()) {</span>
+<span class="nc" id="L78">            logger.error(&quot;Исключение в: {} с причиной: {}&quot;,</span>
+<span class="nc" id="L79">                    joinPoint.getSignature().toShortString(), error.getMessage());</span>
+        }
+<span class="nc" id="L81">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

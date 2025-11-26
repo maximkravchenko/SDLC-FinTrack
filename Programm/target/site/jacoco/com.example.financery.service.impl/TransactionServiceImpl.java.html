@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TransactionServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Financery</a> &gt; <a href="index.source.html" class="el_package">com.example.financery.service.impl</a> &gt; <span class="el_source">TransactionServiceImpl.java</span></div><h1>TransactionServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.financery.service.impl;
+
+import com.example.financery.dto.BillDtoResponse;
+import com.example.financery.dto.TransactionDtoRequest;
+import com.example.financery.dto.TransactionDtoResponse;
+import com.example.financery.exception.InvalidInputException;
+import com.example.financery.exception.NotFoundException;
+import com.example.financery.mapper.TransactionMapper;
+import com.example.financery.model.Bill;
+import com.example.financery.model.Tag;
+import com.example.financery.model.Transaction;
+import com.example.financery.model.User;
+import com.example.financery.repository.BillRepository;
+import com.example.financery.repository.TagRepository;
+import com.example.financery.repository.TransactionRepository;
+import com.example.financery.repository.UserRepository;
+import com.example.financery.service.TransactionService;
+import com.example.financery.utils.InMemoryCache;
+import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
+import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@AllArgsConstructor
+public class TransactionServiceImpl implements TransactionService {
+
+    public static final String TRANSACTION_WITH_ID_NOT_FOUND = &quot;Транзакция с id %d не найдена&quot;;
+    public static final String USER_WITH_ID_NOT_FOUND = &quot;Пользователь с id %d не найден&quot;;
+    public static final String BILL_WITH_ID_NOT_FOUND = &quot;Счет с id %d не найден&quot;;
+
+    private final TransactionRepository transactionRepository;
+    private final TransactionMapper transactionMapper;
+    private final UserRepository userRepository;
+    private final BillRepository billRepository;
+    private final TagRepository tagRepository;
+
+    private final InMemoryCache cache;
+
+<span class="fc" id="L46">    private static final Logger log = LoggerFactory.getLogger(TransactionServiceImpl.class);</span>
+
+    @Override
+    @Transactional
+    public List&lt;TransactionDtoResponse&gt; getAllTransactions() {
+<span class="fc" id="L51">        List&lt;TransactionDtoResponse&gt; transactionsResponse = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L52">        transactionRepository.findAll().forEach(</span>
+                transaction -&gt; {
+<span class="fc" id="L54">                    Hibernate.initialize(transaction.getTags());</span>
+<span class="fc" id="L55">                    transactionsResponse.add(transactionMapper.toTransactionDto(transaction));</span>
+<span class="fc" id="L56">                });</span>
+<span class="fc" id="L57">        return transactionsResponse;</span>
+    }
+
+    @Override
+    @Transactional
+    public TransactionDtoResponse getTransactionById(long transactionId) {
+<span class="fc" id="L63">        Transaction transaction = transactionRepository.findById(transactionId)</span>
+<span class="fc" id="L64">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L65">                        String.format(TRANSACTION_WITH_ID_NOT_FOUND, transactionId)));</span>
+<span class="fc" id="L66">        Hibernate.initialize(transaction.getTags());</span>
+<span class="fc" id="L67">        return transactionMapper.toTransactionDto(transaction);</span>
+    }
+
+    @Override
+    @Transactional
+    public List&lt;TransactionDtoResponse&gt; getTransactionsByUserId(long userId) {
+
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        if (!userRepository.existsById(userId)) {</span>
+<span class="fc" id="L75">            throw new NotFoundException(String.format(USER_WITH_ID_NOT_FOUND, userId));</span>
+        }
+
+        //Чекаем есть ли в кеше
+<span class="fc" id="L79">        List&lt;TransactionDtoResponse&gt; cachedTransactions = cache.get(userId);</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">        if (cachedTransactions != null) {</span>
+<span class="fc" id="L81">            return cachedTransactions;</span>
+        }
+
+<span class="fc" id="L84">        List&lt;Transaction&gt; transactions = transactionRepository.findByUserId(userId);</span>
+<span class="fc" id="L85">        List&lt;TransactionDtoResponse&gt; transactionsResponse = transactions.stream()</span>
+<span class="fc" id="L86">                .map(transactionMapper::toTransactionDto)</span>
+<span class="fc" id="L87">                .collect(Collectors.toList());</span>
+
+<span class="fc" id="L89">        log.info(&quot;Сопоставлено {} транзакций для пользователя: {}&quot;,</span>
+<span class="fc" id="L90">                transactionsResponse.size(), userId);</span>
+<span class="fc" id="L91">        cache.put(userId, transactionsResponse);</span>
+<span class="fc" id="L92">        return transactionsResponse;</span>
+    }
+
+    @Override
+    @Transactional
+    public List&lt;TransactionDtoResponse&gt; getTransactionsByBillId(long billId) {
+<span class="fc" id="L98">        billRepository.findById(billId)</span>
+<span class="fc" id="L99">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L100">                        String.format(BILL_WITH_ID_NOT_FOUND, billId)));</span>
+
+<span class="fc" id="L102">        List&lt;Transaction&gt; transactions = transactionRepository.findByBill(billId);</span>
+<span class="fc" id="L103">        List&lt;TransactionDtoResponse&gt; transactionsResponse = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L105">        transactions.forEach(</span>
+                transaction -&gt; {
+<span class="fc" id="L107">                    Hibernate.initialize(transaction.getTags());</span>
+<span class="fc" id="L108">                    transactionsResponse.add(transactionMapper.toTransactionDto(transaction));</span>
+<span class="fc" id="L109">                });</span>
+<span class="fc" id="L110">        return transactionsResponse;</span>
+    }
+
+    @Override
+    @Transactional
+    public TransactionDtoResponse createTransaction(TransactionDtoRequest transactionDto) {
+        // Проверяем сумму транзакции перед обращением к репозиториям
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        if (transactionDto.getAmount() &gt; 1_000_000) {</span>
+<span class="fc" id="L118">            throw new InvalidInputException(&quot;Сумма транзакции не может превышать 1,000,000&quot;);</span>
+        }
+
+<span class="fc" id="L121">        User user = userRepository.findById(transactionDto.getUserId())</span>
+<span class="fc" id="L122">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L123">                        String.format(USER_WITH_ID_NOT_FOUND, transactionDto.getUserId())));</span>
+
+<span class="fc" id="L125">        Bill bill = billRepository</span>
+<span class="fc" id="L126">                .findByIdAndUserId(</span>
+<span class="fc" id="L127">                        transactionDto.getBillId(),</span>
+<span class="fc" id="L128">                        transactionDto.getUserId())</span>
+<span class="fc" id="L129">                .orElseThrow(() -&gt; new NotFoundException(</span>
+                        &quot;Счет с id &quot;
+<span class="fc" id="L131">                                + transactionDto.getBillId()</span>
+                                + &quot; не найден или не принадлежит пользователю&quot;));
+
+<span class="fc" id="L134">        Transaction transaction = TransactionMapper.toTransaction(transactionDto);</span>
+
+<span class="fc bfc" id="L136" title="All 4 branches covered.">        if (!transaction.isType() &amp;&amp; transaction.getAmount() &gt; bill.getBalance()) {</span>
+<span class="fc" id="L137">            throw new InvalidInputException(&quot;Недостаточно средств на счете для суммы транзакции&quot;);</span>
+        }
+
+<span class="fc bfc" id="L140" title="All 2 branches covered.">        if (transaction.isType()) {</span>
+<span class="fc" id="L141">            bill.addAmount(transaction.getAmount());</span>
+        } else {
+<span class="fc" id="L143">            bill.subtractAmount(transaction.getAmount());</span>
+        }
+
+<span class="fc" id="L146">        transaction.setUser(user);</span>
+<span class="fc" id="L147">        transaction.setBill(bill);</span>
+
+<span class="pc bpc" id="L149" title="2 of 4 branches missed.">        if (transactionDto.getTagIds() != null &amp;&amp; !transactionDto.getTagIds().isEmpty()) {</span>
+<span class="fc" id="L150">            List&lt;Tag&gt; tags = tagRepository.findAllById(transactionDto.getTagIds());</span>
+<span class="fc bfc" id="L151" title="All 2 branches covered.">            if (tags.size() != transactionDto.getTagIds().size()) {</span>
+<span class="fc" id="L152">                throw new InvalidInputException(</span>
+                        &quot;Один или несколько тегов по ID не найдены&quot;);
+            }
+<span class="fc bfc" id="L155" title="All 4 branches covered.">            if (tags.stream().anyMatch(tag -&gt; tag.getUser().getId() != user.getId())) {</span>
+<span class="fc" id="L156">                throw new InvalidInputException(</span>
+                        &quot;Один или несколько тегов не найдены или не принадлежат пользователю&quot;);
+            }
+<span class="fc" id="L159">            transaction.setTags(tags);</span>
+        }
+
+<span class="fc" id="L162">        transactionRepository.save(transaction);</span>
+<span class="fc" id="L163">        cache.updateTransaction(user.getId(), transactionMapper.toTransactionDto(transaction));</span>
+<span class="fc" id="L164">        return transactionMapper.toTransactionDto(transaction);</span>
+    }
+
+    @Override
+    @Transactional
+    public TransactionDtoResponse updateTransaction(long transactionId, TransactionDtoRequest transactionDto) {
+<span class="fc" id="L170">        Transaction existingTransaction = transactionRepository</span>
+<span class="fc" id="L171">                .findById(transactionId)</span>
+<span class="fc" id="L172">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L173">                        String.format(TRANSACTION_WITH_ID_NOT_FOUND, transactionId)));</span>
+
+<span class="fc bfc" id="L175" title="All 2 branches covered.">        if (transactionDto.getAmount() &gt; 1_000_000) {</span>
+<span class="fc" id="L176">            throw new InvalidInputException(&quot;Сумма транзакции не может превышать 1,000,000&quot;);</span>
+        }
+
+<span class="fc bfc" id="L179" title="All 2 branches covered.">        if (!existingTransaction.getUser().getId().equals(transactionDto.getUserId())) {</span>
+<span class="fc" id="L180">            throw new InvalidInputException(</span>
+<span class="fc" id="L181">                    &quot;Нельзя изменить пользователя транзакции, используй: &quot; + existingTransaction.getUser().getId());</span>
+        }
+<span class="fc bfc" id="L183" title="All 2 branches covered.">        if (!existingTransaction.getBill().getId().equals(transactionDto.getBillId())) {</span>
+<span class="fc" id="L184">            throw new InvalidInputException(</span>
+<span class="fc" id="L185">                    &quot;Нельзя изменить счёт транзакции, используй: &quot; + existingTransaction.getBill().getId());</span>
+        }
+
+<span class="fc" id="L188">        User user = userRepository.findById(transactionDto.getUserId())</span>
+<span class="fc" id="L189">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L190">                        String.format(USER_WITH_ID_NOT_FOUND, transactionDto.getUserId())));</span>
+<span class="fc" id="L191">        Bill bill = billRepository</span>
+<span class="fc" id="L192">                .findByIdAndUserId(transactionDto.getBillId(), transactionDto.getUserId())</span>
+<span class="fc" id="L193">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L194">                        &quot;Счет с данным id &quot; + transactionDto.getBillId() + &quot; не найден или не принадлежит пользователю&quot;));</span>
+
+<span class="fc" id="L196">        double oldAmount = existingTransaction.getAmount();</span>
+<span class="fc" id="L197">        double newAmount = transactionDto.getAmount();</span>
+<span class="fc" id="L198">        boolean oldType = existingTransaction.isType();</span>
+<span class="fc" id="L199">        boolean newType = transactionDto.isType();</span>
+
+<span class="fc bfc" id="L201" title="All 4 branches covered.">        if (!newType &amp;&amp; newAmount &gt; bill.getBalance()) {</span>
+<span class="fc" id="L202">            throw new InvalidInputException(&quot;Недостаточно средств на счете для новой суммы транзакции&quot;);</span>
+        }
+
+<span class="fc" id="L205">        existingTransaction.setName(transactionDto.getName());</span>
+<span class="fc" id="L206">        existingTransaction.setDescription(transactionDto.getDescription());</span>
+<span class="fc" id="L207">        existingTransaction.setType(newType);</span>
+<span class="fc" id="L208">        existingTransaction.setAmount(newAmount);</span>
+<span class="fc" id="L209">        existingTransaction.setDate(transactionDto.getDate());</span>
+
+<span class="fc" id="L211">        updateTransactionTags(existingTransaction, transactionDto, user); // Новая функция для тегов</span>
+
+        // Обновление баланса одной операцией
+<span class="fc" id="L214">        double balanceAdjustment = 0;</span>
+<span class="fc bfc" id="L215" title="All 2 branches covered.">        if (!oldType) {</span>
+<span class="fc" id="L216">            balanceAdjustment += oldAmount; // Возвращаем старую сумму, если был расход</span>
+        } else {
+<span class="fc" id="L218">            balanceAdjustment -= oldAmount; // Убираем старую сумму, если был доход</span>
+        }
+<span class="fc bfc" id="L220" title="All 2 branches covered.">        if (newType) {</span>
+<span class="fc" id="L221">            balanceAdjustment += newAmount; // Добавляем новую сумму, если новый тип доход</span>
+        } else {
+<span class="fc" id="L223">            balanceAdjustment -= newAmount; // Вычитаем новую сумму, если новый тип расход</span>
+        }
+<span class="fc" id="L225">        bill.addAmount(balanceAdjustment);</span>
+
+<span class="fc" id="L227">        userRepository.save(user);</span>
+<span class="fc" id="L228">        billRepository.save(bill);</span>
+<span class="fc" id="L229">        transactionRepository.save(existingTransaction);</span>
+<span class="fc" id="L230">        Hibernate.initialize(existingTransaction.getTags());</span>
+<span class="fc" id="L231">        cache.updateTransaction(user.getId(), transactionMapper.toTransactionDto(existingTransaction));</span>
+<span class="fc" id="L232">        return transactionMapper.toTransactionDto(existingTransaction);</span>
+    }
+
+    private void updateTransactionTags(Transaction existingTransaction, TransactionDtoRequest transactionDto, User user) {
+<span class="fc bfc" id="L236" title="All 2 branches covered.">        if (transactionDto.getTagIds() == null) {</span>
+<span class="fc" id="L237">            return;</span>
+        }
+<span class="fc bfc" id="L239" title="All 2 branches covered.">        List&lt;Tag&gt; tags = transactionDto.getTagIds().isEmpty()</span>
+<span class="fc" id="L240">                ? new ArrayList&lt;&gt;()</span>
+<span class="fc" id="L241">                : tagRepository.findAllById(transactionDto.getTagIds());</span>
+<span class="fc bfc" id="L242" title="All 4 branches covered.">        if (!transactionDto.getTagIds().isEmpty() &amp;&amp; tags.size() != transactionDto.getTagIds().size()) {</span>
+<span class="fc" id="L243">            throw new InvalidInputException(&quot;Один или несколько тегов не найдены или не принадлежат пользователю&quot;);</span>
+        }
+<span class="fc bfc" id="L245" title="All 4 branches covered.">        if (tags.stream().anyMatch(tag -&gt; tag.getUser().getId() != user.getId())) {</span>
+<span class="fc" id="L246">            throw new InvalidInputException(&quot;Один или несколько тегов не найдены или не принадлежат пользователю&quot;);</span>
+        }
+<span class="fc" id="L248">        existingTransaction.setTags(tags);</span>
+<span class="fc" id="L249">    }</span>
+
+    @Override
+    @Transactional
+    public void deleteTransaction(long transactionId) {
+<span class="fc" id="L254">        Transaction transaction = transactionRepository.findById(transactionId)</span>
+<span class="fc" id="L255">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L256">                        String.format(TRANSACTION_WITH_ID_NOT_FOUND, transactionId)));</span>
+
+<span class="fc" id="L258">        Bill bill = billRepository.findById(transaction.getBill().getId())</span>
+<span class="fc" id="L259">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L260">                        String.format(BILL_WITH_ID_NOT_FOUND, transaction.getBill().getId())));</span>
+
+        // Исправляем логику: меняем местами addAmount и subtractAmount
+<span class="fc bfc" id="L263" title="All 2 branches covered.">        if (transaction.isType()) { // type == true (доход)</span>
+<span class="fc" id="L264">            bill.subtractAmount(transaction.getAmount()); // Уменьшаем баланс (отмена дохода)</span>
+        } else { // type == false (расход)
+<span class="fc" id="L266">            bill.addAmount(transaction.getAmount()); // Увеличиваем баланс (отмена расхода)</span>
+        }
+
+<span class="fc" id="L269">        Long userId = transaction.getUser().getId();</span>
+<span class="fc" id="L270">        transactionRepository.delete(transaction);</span>
+<span class="fc" id="L271">        cache.removeTransaction(userId, transactionId);</span>
+<span class="fc" id="L272">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

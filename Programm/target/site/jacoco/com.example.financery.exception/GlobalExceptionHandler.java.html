@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Financery</a> &gt; <a href="index.source.html" class="el_package">com.example.financery.exception</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package com.example.financery.exception;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import com.example.financery.model.ErrorResponse;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+
+import java.util.stream.Collectors;
+
+@ControllerAdvice
+<span class="fc" id="L17">public class GlobalExceptionHandler {</span>
+
+<span class="fc" id="L19">    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);</span>
+
+    @ExceptionHandler(InvalidInputException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleValidationExceptions(InvalidInputException ex) {
+<span class="nc" id="L23">        logger.warn(&quot;Ошибка валидации (InvalidInputException): {}&quot;, ex.getMessage());</span>
+<span class="nc" id="L24">        ErrorResponse errorResponse = new ErrorResponse(</span>
+<span class="nc" id="L25">                HttpStatus.BAD_REQUEST.value(),</span>
+<span class="nc" id="L26">                ex.getMessage());</span>
+<span class="nc" id="L27">        return new ResponseEntity&lt;&gt;(errorResponse, HttpStatus.BAD_REQUEST);</span>
+    }
+
+    @ExceptionHandler(FileNotReadyException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleFileNotReadyException(FileNotReadyException ex) {
+<span class="nc" id="L32">        logger.warn(&quot;Файл не готов (FileNotReadyException): {}&quot;, ex.getMessage());</span>
+<span class="nc" id="L33">        ErrorResponse errorResponse = new ErrorResponse(</span>
+<span class="nc" id="L34">                HttpStatus.CONFLICT.value(),</span>
+<span class="nc" id="L35">                ex.getMessage()</span>
+        );
+<span class="nc" id="L37">        return new ResponseEntity&lt;&gt;(errorResponse, HttpStatus.CONFLICT);</span>
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleValidationExceptions(
+            MethodArgumentNotValidException ex) {
+<span class="nc" id="L43">        String errorMessage = ex.getBindingResult().getAllErrors().stream()</span>
+<span class="nc" id="L44">                .map(error -&gt; error.getDefaultMessage())</span>
+<span class="nc" id="L45">                .collect(Collectors.joining(&quot;; &quot;));</span>
+<span class="nc" id="L46">        logger.warn(&quot;Ошибка валидации (MethodArgumentNotValidException): {}&quot;, errorMessage);</span>
+<span class="nc" id="L47">        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(),</span>
+                errorMessage);
+<span class="nc" id="L49">        return new ResponseEntity&lt;&gt;(errorResponse, HttpStatus.BAD_REQUEST);</span>
+    }
+
+    @ExceptionHandler(LogException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleLogException(LogException ex) {
+<span class="nc" id="L54">        logger.error(&quot;Log exception: {}&quot;, ex.getMessage());</span>
+<span class="nc" id="L55">        ErrorResponse errorResponse = new ErrorResponse(</span>
+<span class="nc" id="L56">                HttpStatus.BAD_REQUEST.value(), ex.getMessage());</span>
+<span class="nc" id="L57">        return new ResponseEntity&lt;&gt;(errorResponse, HttpStatus.BAD_REQUEST);</span>
+    }
+
+
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleNotFoundException(
+            NotFoundException ex) {
+<span class="nc" id="L65">        logger.warn(&quot;Ресурс не найден (NotFoundException): {}&quot;, ex.getMessage());</span>
+<span class="nc" id="L66">        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.NOT_FOUND.value(),</span>
+<span class="nc" id="L67">                ex.getMessage());</span>
+<span class="nc" id="L68">        return new ResponseEntity&lt;&gt;(errorResponse, HttpStatus.NOT_FOUND);</span>
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleHandlerMethodValidationException(
+            HandlerMethodValidationException ex) {
+<span class="nc" id="L74">        String errorMessage = ex.getAllErrors().stream()</span>
+<span class="nc" id="L75">                .map(error -&gt; error.getDefaultMessage())</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">                .filter(msg -&gt; msg != null) // Фильтруем null-сообщения</span>
+<span class="nc" id="L77">                .collect(Collectors.joining(&quot;; &quot;));</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">        if (errorMessage.isEmpty()) {</span>
+<span class="nc" id="L79">            errorMessage = &quot;Validation failed: &quot; + ex.getMessage();</span>
+        }
+<span class="nc" id="L81">        logger.warn(&quot;Ошибка валидации (HandlerMethodValidationException): {}&quot;, errorMessage);</span>
+<span class="nc" id="L82">        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(),</span>
+                errorMessage);
+<span class="nc" id="L84">        return new ResponseEntity&lt;&gt;(errorResponse, HttpStatus.BAD_REQUEST);</span>
+    }
+
+    @ExceptionHandler(AlreadyExistsException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleAlreadyExistsException(AlreadyExistsException ex) {
+<span class="nc" id="L89">        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.CONFLICT.value(),</span>
+<span class="nc" id="L90">                ex.getMessage());</span>
+<span class="nc" id="L91">        return new ResponseEntity&lt;&gt;(errorResponse, HttpStatus.CONFLICT);</span>
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex) {
+<span class="nc" id="L97">        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST.value(),</span>
+                &quot;Ошибка: тело запроса отсутствует или недоступно.&quot;);
+<span class="nc" id="L99">        return new ResponseEntity&lt;&gt;(errorResponse, HttpStatus.BAD_REQUEST);</span>
+    }
+
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleGenericException(Exception ex) {
+<span class="nc" id="L105">        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),</span>
+                &quot;Произошла непредвиденная ошибка&quot;);
+<span class="nc" id="L107">        return new ResponseEntity&lt;&gt;(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);</span>
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleIllegalStateException(IllegalStateException ex) {
+<span class="nc" id="L112">        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),</span>
+<span class="nc" id="L113">                ex.getMessage());</span>
+<span class="nc" id="L114">        return new ResponseEntity&lt;&gt;(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TagController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Financery</a> &gt; <a href="index.source.html" class="el_package">com.example.financery.controller</a> &gt; <span class="el_source">TagController.java</span></div><h1>TagController.java</h1><pre class="source lang-java linenums">package com.example.financery.controller;
+
+import com.example.financery.dto.TagDtoRequest;
+import com.example.financery.dto.TagDtoResponse;
+import com.example.financery.mapper.TagMapper;
+import com.example.financery.model.Tag;
+import com.example.financery.service.TagService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping(&quot;/tags&quot;)
+@AllArgsConstructor
+@io.swagger.v3.oas.annotations.tags.Tag(name = &quot;Теги&quot;,
+        description = &quot;Управление тегами пользователя&quot;)
+public class TagController {
+
+    private final TagService tagService;
+    private final TagMapper tagMapper;
+
+    @Operation(
+            summary = &quot;Получение всех существующих тегов&quot;,
+            description = &quot;Возвращает список всех тегов, доступных в системе.&quot;
+    )
+    @GetMapping(&quot;/get-all-tags&quot;)
+    public List&lt;TagDtoResponse&gt; getAllTags() {
+<span class="nc" id="L34">        return tagService.getAllTags();</span>
+    }
+
+    @Operation(
+            summary = &quot;Получение всех тегов пользователя&quot;,
+            description = &quot;Возвращает список всех тегов, принадлежащих пользователю с указанным ID.&quot;
+    )
+    @GetMapping(&quot;/get-all-user-tags/{userId}&quot;)
+    public List&lt;TagDtoResponse&gt; getAllUserTags(
+            @Parameter(description = &quot;ID пользователя, чьи теги необходимо получить&quot;,
+                    required = true, example = &quot;1&quot;)
+            @PathVariable long userId) {
+<span class="nc" id="L46">        return tagService.getTagsByUserId(userId);</span>
+    }
+
+    @Operation(
+            summary = &quot;Получение тега по ID&quot;,
+            description = &quot;Возвращает информацию о теге с указанным ID.&quot;
+    )
+    @GetMapping(&quot;/get-tag-by-id/{tagId}&quot;)
+    public ResponseEntity&lt;TagDtoResponse&gt; getTagById(
+            @Parameter(description = &quot;ID тега, который необходимо получить&quot;,
+                    required = true, example = &quot;1&quot;)
+            @PathVariable long tagId) {
+<span class="nc" id="L58">        return ResponseEntity.ok(tagService.getTagById(tagId));</span>
+    }
+
+    @Operation(
+            summary = &quot;Получение тегов по транзакции&quot;,
+            description = &quot;Возвращает список тегов,&quot;
+                    + &quot; связанных с транзакцией по указанному ID транзакции.&quot;
+    )
+    @GetMapping(&quot;/get-tags-by-transaction/{transactionId}&quot;)
+    public List&lt;TagDtoResponse&gt; getTagsByTransactionId(
+            @Parameter(description = &quot;ID транзакции, теги которой необходимо получить&quot;,
+                    required = true, example = &quot;1&quot;)
+            @PathVariable long transactionId) {
+<span class="nc" id="L71">        return tagService.getTagsByTransactionId(transactionId);</span>
+    }
+
+    @PostMapping(&quot;/add-many&quot;)
+    @Operation(summary = &quot;Создаёт большое количество категорий&quot;,
+            description = &quot;Создаёт категории из передаваемого множества&quot;)
+    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Категории созданы&quot;)
+    @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Некоторые категории уже есть&quot;)
+    public ResponseEntity&lt;List&lt;TagDtoResponse&gt;&gt; createBulk(
+            @RequestBody @Valid List&lt;TagDtoRequest&gt; tagList) {
+<span class="nc" id="L81">        List&lt;Tag&gt; savedTags = tagService.saveAll(tagList);</span>
+<span class="nc" id="L82">        List&lt;TagDtoResponse&gt; response = savedTags.stream()</span>
+<span class="nc" id="L83">                .map(tagMapper::toTagDto)</span>
+<span class="nc" id="L84">                .toList();</span>
+<span class="nc" id="L85">        return ResponseEntity.ok(response);</span>
+    }
+
+    @Operation(
+            summary = &quot;Создание нового тега&quot;,
+            description = &quot;Создает новый тег на основе переданных данных.&quot;
+    )
+    @PostMapping(&quot;/create&quot;)
+    public TagDtoResponse createTag(
+            @Parameter(description = &quot;Данные для создания нового тега&quot;, required = true)
+            @Valid @RequestBody TagDtoRequest tagDto) {
+<span class="nc" id="L96">        return tagService.createTag(tagDto);</span>
+    }
+
+    @Operation(
+            summary = &quot;Обновление тега по ID&quot;,
+            description = &quot;Обновляет данные тега с указанным ID на основе переданных данных.&quot;
+    )
+    @PutMapping(&quot;/update-by-id/{tagId}&quot;)
+    public TagDtoResponse updateTag(
+            @Parameter(description = &quot;ID тега, который необходимо обновить&quot;,
+                    required = true, example = &quot;1&quot;)
+            @PathVariable long tagId,
+            @Parameter(description = &quot;Обновленные данные тега&quot;, required = true)
+            @Valid @RequestBody TagDtoRequest tagDto) {
+<span class="nc" id="L110">        return tagService.updateTag(tagId, tagDto);</span>
+    }
+
+    @Operation(
+            summary = &quot;Удаление тега по ID&quot;,
+            description = &quot;Удаляет тег с указанным ID.&quot;
+    )
+    @DeleteMapping(&quot;/delete-by-id/{tagId}&quot;)
+    public void deleteTagById(
+            @Parameter(description = &quot;ID тега, который необходимо удалить&quot;,
+                    required = true, example = &quot;1&quot;)
+            @PathVariable long tagId) {
+<span class="nc" id="L122">        tagService.deleteTag(tagId);</span>
+<span class="nc" id="L123">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

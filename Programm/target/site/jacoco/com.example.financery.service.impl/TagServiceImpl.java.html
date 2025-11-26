@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TagServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Financery</a> &gt; <a href="index.source.html" class="el_package">com.example.financery.service.impl</a> &gt; <span class="el_source">TagServiceImpl.java</span></div><h1>TagServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.financery.service.impl;
+
+import com.example.financery.dto.TagDtoRequest;
+import com.example.financery.dto.TagDtoResponse;
+import com.example.financery.dto.TransactionDtoResponse;
+import com.example.financery.exception.AlreadyExistsException;
+import com.example.financery.exception.InvalidInputException;
+import com.example.financery.exception.NotFoundException;
+import com.example.financery.mapper.TagMapper;
+import com.example.financery.mapper.TransactionMapper;
+import com.example.financery.model.Tag;
+import com.example.financery.model.Transaction;
+import com.example.financery.model.User;
+import com.example.financery.repository.TagRepository;
+import com.example.financery.repository.TransactionRepository;
+import com.example.financery.repository.UserRepository;
+import com.example.financery.service.TagService;
+import com.example.financery.utils.InMemoryCache;
+import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
+import org.hibernate.Hibernate;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service
+@AllArgsConstructor
+public class TagServiceImpl implements TagService {
+
+    public static final String TAG_WITH_ID_NOT_FOUND = &quot;Тег с id %d не найден&quot;;
+
+    private final TagRepository tagRepository;
+    private final TagMapper tagMapper;
+    private final TransactionMapper transactionMapper;
+    private final UserRepository userRepository;
+    private final TransactionRepository transactionRepository;
+
+    private final InMemoryCache cache;
+
+    @Override
+    public List&lt;TagDtoResponse&gt; getAllTags() {
+<span class="fc" id="L45">        List&lt;TagDtoResponse&gt; tagsResponse = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L46">        tagRepository.findAll().forEach(</span>
+<span class="fc" id="L47">                tag -&gt; tagsResponse.add(tagMapper.toTagDto(tag)));</span>
+<span class="fc" id="L48">        return tagsResponse;</span>
+    }
+
+    @Override
+    public List&lt;TagDtoResponse&gt; getTagsByUserId(long userId) {
+<span class="fc" id="L53">        userRepository.findById(userId)</span>
+<span class="fc" id="L54">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L55">                        String.format(&quot;Пользователь с id %d не найден&quot;, userId)));</span>
+<span class="fc" id="L56">        List&lt;Tag&gt; tags = tagRepository.findByUser(userId);</span>
+<span class="fc" id="L57">        List&lt;TagDtoResponse&gt; tagsResponse = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L58">        tags.forEach(tag -&gt; tagsResponse.add(tagMapper.toTagDto(tag)));</span>
+<span class="fc" id="L59">        return tagsResponse;</span>
+    }
+
+    @Override
+    public TagDtoResponse getTagById(long id) {
+<span class="fc" id="L64">        Tag tag = tagRepository.findById(id)</span>
+<span class="fc" id="L65">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L66">                        String.format(TAG_WITH_ID_NOT_FOUND, id)));</span>
+<span class="fc" id="L67">        return tagMapper.toTagDto(tag);</span>
+    }
+
+    @Override
+    public List&lt;TagDtoResponse&gt; getTagsByTransactionId(long transactionId) {
+<span class="fc" id="L72">        List&lt;Tag&gt; tags = tagRepository.findByTransaction(transactionId);</span>
+<span class="fc" id="L73">        List&lt;TagDtoResponse&gt; tagsResponse = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L74">        tags.forEach(tag -&gt; tagsResponse.add(tagMapper.toTagDto(tag)));</span>
+<span class="fc" id="L75">        return tagsResponse;</span>
+    }
+
+    @Override
+    public List&lt;TransactionDtoResponse&gt; getTransactionsByTagId(long tagId) {
+<span class="fc" id="L80">        tagRepository.findById(tagId)</span>
+<span class="fc" id="L81">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L82">                        String.format(TAG_WITH_ID_NOT_FOUND, tagId)));</span>
+<span class="fc" id="L83">        List&lt;TransactionDtoResponse&gt; transactionsResponse = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L84">        tagRepository.findTransactionsByTag(tagId)</span>
+<span class="fc" id="L85">                .forEach(transaction -&gt; transactionsResponse</span>
+<span class="fc" id="L86">                        .add(transactionMapper.toTransactionDto(transaction)));</span>
+<span class="fc" id="L87">        return transactionsResponse;</span>
+    }
+
+    @Override
+    public List&lt;Tag&gt; saveAll(List&lt;TagDtoRequest&gt; tagList) {
+<span class="fc" id="L92">        List&lt;Long&gt; userIds = tagList.stream()</span>
+<span class="fc" id="L93">                .map(TagDtoRequest::getUserId)</span>
+<span class="fc" id="L94">                .distinct()</span>
+<span class="fc" id="L95">                .toList();</span>
+<span class="fc" id="L96">        List&lt;User&gt; users = userRepository.findAllById(userIds);</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">        if (users.size() != userIds.size()) {</span>
+<span class="fc" id="L98">            throw new NotFoundException(&quot;Один или несколько пользователей не найдены&quot;);</span>
+        }
+<span class="fc" id="L100">        Map&lt;Long, User&gt; userMap = users.stream()</span>
+<span class="fc" id="L101">                .collect(Collectors.toMap(User::getId, user -&gt; user));</span>
+
+<span class="fc" id="L103">        List&lt;Tag&gt; tags = tagList.stream()</span>
+<span class="fc bfc" id="L104" title="All 4 branches covered.">                .filter(dto -&gt; dto.getTitle() != null &amp;&amp; dto.getTitle().length() &gt;= 3)</span>
+<span class="fc" id="L105">                .map(dto -&gt; {</span>
+<span class="fc" id="L106">                    Tag tag = tagMapper.toTag(dto);</span>
+<span class="fc" id="L107">                    tag.setUser(userMap.get(dto.getUserId()));</span>
+<span class="fc" id="L108">                    return tag;</span>
+                })
+<span class="fc" id="L110">                .toList();</span>
+<span class="fc" id="L111">        return tagRepository.saveAll(tags);</span>
+    }
+
+    @Override
+    public TagDtoResponse createTag(TagDtoRequest tagDto) {
+<span class="fc" id="L116">        User user = userRepository.findById(tagDto.getUserId())</span>
+<span class="fc" id="L117">                .orElseThrow(() -&gt; new NotFoundException(</span>
+                        &quot;Пользователь с id &quot;
+<span class="fc" id="L119">                        + tagDto.getUserId()</span>
+                        + &quot; не найден&quot;));
+
+<span class="fc" id="L122">        Tag tag = tagMapper.toTag(tagDto);</span>
+<span class="fc" id="L123">        tag.setUser(user);</span>
+<span class="fc" id="L124">        tagRepository.save(tag);</span>
+
+<span class="fc" id="L126">        return tagMapper.toTagDto(tag);</span>
+    }
+
+    @Override
+    public TagDtoResponse updateTag(long id, TagDtoRequest tagDto) {
+<span class="fc" id="L131">        Tag tag = tagRepository.findById(id)</span>
+<span class="fc" id="L132">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L133">                        String.format(TAG_WITH_ID_NOT_FOUND, id)));</span>
+<span class="fc" id="L134">        Long userId = tag.getUser().getId();</span>
+
+<span class="fc bfc" id="L136" title="All 2 branches covered.">        if (tag.getUser().getId() != tagDto.getUserId()) {</span>
+<span class="fc" id="L137">            throw new InvalidInputException(&quot;Тег не принадлежит указанному пользователю&quot;);</span>
+        }
+
+<span class="fc" id="L140">        tag.setTitle(tagDto.getTitle());</span>
+<span class="fc" id="L141">        tagRepository.save(tag);</span>
+
+<span class="fc" id="L143">        List&lt;TransactionDtoResponse&gt; transactions = getTransactionsByTagId(id);</span>
+<span class="fc bfc" id="L144" title="All 2 branches covered.">        for (TransactionDtoResponse transaction : transactions) {</span>
+<span class="fc" id="L145">            cache.updateTransaction(userId, transactionMapper.toTransactionDto(</span>
+                    transactionRepository
+<span class="fc" id="L147">                            .findById(transaction</span>
+<span class="fc" id="L148">                                    .getId())</span>
+<span class="fc" id="L149">                            .orElseThrow(() -&gt; new NotFoundException(</span>
+                                    &quot;Транзакция не найдена&quot;))));
+<span class="fc" id="L151">        }</span>
+
+<span class="fc" id="L153">        return tagMapper.toTagDto(tag);</span>
+    }
+
+    @Override
+    @Transactional
+    public void deleteTag(long id) {
+<span class="fc" id="L159">        Tag tag = tagRepository.findById(id)</span>
+<span class="fc" id="L160">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L161">                        String.format(TAG_WITH_ID_NOT_FOUND, id)));</span>
+<span class="fc" id="L162">        Long userId = tag.getUser().getId();</span>
+
+<span class="fc" id="L164">        List&lt;Transaction&gt; transactions = tagRepository.findTransactionsByTag(id);</span>
+<span class="fc" id="L165">        List&lt;TransactionDtoResponse&gt; transactionDtos = new ArrayList&lt;&gt;();</span>
+
+<span class="fc bfc" id="L167" title="All 2 branches covered.">        for (Transaction transaction : transactions) {</span>
+<span class="fc" id="L168">            Hibernate.initialize(transaction.getTags());</span>
+<span class="fc" id="L169">            transaction.getTags().removeIf(t -&gt; t.getId().equals(id));</span>
+<span class="fc" id="L170">            transactionDtos.add(transactionMapper.toTransactionDto(transaction));</span>
+<span class="fc" id="L171">        }</span>
+
+<span class="fc" id="L173">        transactionRepository.saveAll(transactions);</span>
+
+<span class="fc bfc" id="L175" title="All 2 branches covered.">        for (TransactionDtoResponse transaction : transactionDtos) {</span>
+<span class="fc" id="L176">            cache.updateTransaction(userId, transaction);</span>
+<span class="fc" id="L177">        }</span>
+
+<span class="fc" id="L179">        tagRepository.delete(tag);</span>
+<span class="fc" id="L180">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

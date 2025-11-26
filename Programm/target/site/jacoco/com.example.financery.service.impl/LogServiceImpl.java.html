@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LogServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Financery</a> &gt; <a href="index.source.html" class="el_package">com.example.financery.service.impl</a> &gt; <span class="el_source">LogServiceImpl.java</span></div><h1>LogServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.financery.service.impl;
+
+import com.example.financery.exception.FileNotReadyException;
+import com.example.financery.exception.InvalidInputException;
+import com.example.financery.exception.NotFoundException;
+import com.example.financery.model.LogObject;
+import com.example.financery.service.LogService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicLong;
+
+<span class="fc" id="L38">@Slf4j</span>
+@Service
+public class LogServiceImpl implements LogService {
+
+    private final Path logFilePath;
+    private final Path tempDir;
+    private final Executor executor;
+<span class="fc" id="L45">    private final AtomicLong idCounter = new AtomicLong(1);</span>
+<span class="fc" id="L46">    private final Map&lt;Long, LogObject&gt; tasks = new ConcurrentHashMap&lt;&gt;();</span>
+    private static final String DATE_FORMAT = &quot;yyyy-mm-dd&quot;;
+    private static final String FAIL_TEXT = &quot;FAILED&quot;;
+
+    public LogServiceImpl(
+            @Value(&quot;${app.log.file.path}&quot;) String logFilePath,
+            @Value(&quot;${app.temp.dir.path}&quot;) String tempDirPath,
+<span class="fc" id="L53">            @Qualifier(&quot;executor&quot;) Executor executor) {</span>
+<span class="fc" id="L54">        this.logFilePath = Paths.get(logFilePath);</span>
+<span class="fc" id="L55">        this.tempDir = Paths.get(tempDirPath);</span>
+<span class="fc" id="L56">        this.executor = executor;</span>
+<span class="fc" id="L57">        ensureTempDirExists();</span>
+<span class="fc" id="L58">    }</span>
+
+    public void ensureTempDirExists() {
+        try {
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">            if (!Files.exists(tempDir)) {</span>
+<span class="nc" id="L63">                Files.createDirectories(tempDir);</span>
+<span class="nc" id="L64">                log.info(&quot;Создана защищённая временная директория: {}&quot;, tempDir);</span>
+            }
+<span class="nc" id="L66">        } catch (IOException e) {</span>
+<span class="nc" id="L67">            throw new IllegalStateException(</span>
+                    &quot;Не удаётся создать защищённую временную директорию&quot;,
+                    e);
+<span class="fc" id="L70">        }</span>
+<span class="fc" id="L71">    }</span>
+
+    @Override
+    public Resource downloadLogs(String date) {
+<span class="nc" id="L75">        LocalDate logDate = parseDate(date);</span>
+<span class="nc" id="L76">        validateLogFileExists(logFilePath);</span>
+<span class="nc" id="L77">        String formattedDate = logDate.format(DateTimeFormatter</span>
+<span class="nc" id="L78">                .ofPattern(DATE_FORMAT));</span>
+
+<span class="nc" id="L80">        Path tempFilePath = createTempFile(logDate);</span>
+<span class="nc" id="L81">        filterAndWriteLogsToTempFile(logFilePath, formattedDate, tempFilePath);</span>
+
+<span class="nc" id="L83">        Resource resource = createResourceFromTempFile(tempFilePath, date);</span>
+<span class="nc" id="L84">        log.info(&quot;Файл логов с датой {} успешно загружен&quot;, date);</span>
+<span class="nc" id="L85">        return resource;</span>
+    }
+
+    @Override
+    public LocalDate parseDate(String date) {
+        try {
+<span class="nc" id="L91">            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);</span>
+<span class="nc" id="L92">            return LocalDate.parse(date, formatter);</span>
+<span class="nc" id="L93">        } catch (DateTimeParseException e) {</span>
+<span class="nc" id="L94">            throw new InvalidInputException(&quot;Неверный формат даты. Требуется dd-mm-yyyy&quot;);</span>
+        }
+    }
+
+    @Override
+    public void validateLogFileExists(Path path) {
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        if (!Files.exists(path)) {</span>
+<span class="nc" id="L101">            throw new NotFoundException(&quot;Файл не существует: &quot; + path);</span>
+        }
+<span class="nc" id="L103">    }</span>
+
+    @Override
+    public Path createTempFile(LocalDate logDate) {
+        try {
+<span class="nc" id="L108">            String osName = System.getProperty(&quot;os.name&quot;).toLowerCase();</span>
+
+<span class="nc bnc" id="L110" title="All 2 branches missed.">            if (osName.contains(&quot;win&quot;)) {</span>
+<span class="nc" id="L111">                Path tempFilePath = Files.createTempFile(tempDir, &quot;log-&quot; + logDate + &quot;-&quot;, &quot;.log&quot;);</span>
+<span class="nc" id="L112">                java.io.File tempFile = tempFilePath.toFile();</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">                if (!tempFile.setReadable(true, true)) {</span>
+<span class="nc" id="L114">                    throw new IllegalStateException(</span>
+                            &quot;Не удалось установить права на чтение для временного файла: &quot;
+                            + tempFile);
+                }
+<span class="nc bnc" id="L118" title="All 2 branches missed.">                if (!tempFile.setWritable(true, true)) {</span>
+<span class="nc" id="L119">                    throw new IllegalStateException(</span>
+                            &quot;Не удалось установить права на запись для временного файла: &quot;
+                                    + tempFile);
+                }
+<span class="nc bnc" id="L123" title="All 4 branches missed.">                if (tempFile.canExecute() &amp;&amp; !tempFile.setExecutable(false, false)) {</span>
+<span class="nc" id="L124">                    log.warn(</span>
+                            &quot;Не удалось удалить права на выполнение для временного файла: {}&quot;,
+                            tempFile);
+                }
+<span class="nc" id="L128">                log.info(&quot;Создан защищённый временный файл на Windows: {}&quot;,</span>
+<span class="nc" id="L129">                        tempFile.getAbsolutePath());</span>
+<span class="nc" id="L130">                return tempFilePath;</span>
+<span class="nc bnc" id="L131" title="All 6 branches missed.">            } else if (osName.contains(&quot;nix&quot;) || osName.contains(&quot;nux&quot;) || osName.contains(&quot;mac&quot;)) {</span>
+<span class="nc" id="L132">                java.nio.file.attribute.FileAttribute&lt;Set&lt;PosixFilePermission&gt;&gt; attr =</span>
+<span class="nc" id="L133">                        PosixFilePermissions.asFileAttribute(PosixFilePermissions</span>
+<span class="nc" id="L134">                                .fromString(&quot;rw-------&quot;));</span>
+<span class="nc" id="L135">                Path tempFilePath = Files.createTempFile(tempDir,</span>
+                        &quot;log-&quot; + logDate + &quot;-&quot;, &quot;.log&quot;, attr);
+<span class="nc" id="L137">                log.info(&quot;Создан защищённый временный файл на Unix/Linux: {}&quot;,</span>
+<span class="nc" id="L138">                        tempFilePath.toAbsolutePath());</span>
+<span class="nc" id="L139">                return tempFilePath;</span>
+            } else {
+<span class="nc" id="L141">                throw new IllegalStateException(&quot;Неподдерживаемая ОС: &quot; + osName);</span>
+            }
+<span class="nc" id="L143">        } catch (IOException e) {</span>
+<span class="nc" id="L144">            throw new IllegalStateException(&quot;Ошибка при создании временного файла: &quot;</span>
+<span class="nc" id="L145">                    + e.getMessage());</span>
+        }
+    }
+
+    @Override
+    public void filterAndWriteLogsToTempFile(Path logFilePath,
+                                             String formattedDate,
+                                             Path tempFilePath) {
+<span class="nc" id="L153">        try (BufferedReader reader = Files.newBufferedReader(logFilePath)) {</span>
+<span class="nc" id="L154">            Files.write(tempFilePath, reader.lines()</span>
+<span class="nc" id="L155">                    .filter(line -&gt; line.contains(formattedDate))</span>
+<span class="nc" id="L156">                    .toList());</span>
+<span class="nc" id="L157">            log.info(</span>
+                    &quot;Отфильтрованные логи за дату {} записаны во временный файл {}&quot;,
+                    formattedDate, tempFilePath);
+<span class="nc" id="L160">        } catch (IOException e) {</span>
+<span class="nc" id="L161">            throw new IllegalStateException(</span>
+                    &quot;Ошибка при обработке файла логов: &quot;
+<span class="nc" id="L163">                            + e.getMessage());</span>
+<span class="nc" id="L164">        }</span>
+<span class="nc" id="L165">    }</span>
+
+    protected Resource createUrlResource(URI uri) throws MalformedURLException {
+<span class="nc" id="L168">        return new UrlResource(uri);</span>
+    }
+
+    @Override
+    public Resource createResourceFromTempFile(Path tempFilePath, String date) {
+        try {
+<span class="nc" id="L174">            long size = Files.size(tempFilePath);</span>
+<span class="nc" id="L175">            log.debug(&quot;Размер временного файла {}: {} байт&quot;, tempFilePath, size);</span>
+<span class="nc bnc" id="L176" title="All 2 branches missed.">            if (size == 0) {</span>
+<span class="nc" id="L177">                throw new NotFoundException(&quot;Нет логов за указанную дату: &quot; + date);</span>
+            }
+<span class="nc" id="L179">            Resource resource = createUrlResource(tempFilePath.toUri());</span>
+<span class="nc" id="L180">            tempFilePath.toFile().deleteOnExit();</span>
+<span class="nc" id="L181">            log.info(&quot;Создан загружаемый ресурс из временного файла: {}&quot;, tempFilePath);</span>
+<span class="nc" id="L182">            return resource;</span>
+<span class="nc" id="L183">        } catch (IOException e) {</span>
+<span class="nc" id="L184">            throw new IllegalStateException(</span>
+                    &quot;Ошибка при создании ресурса из временного файла: &quot;
+<span class="nc" id="L186">                            + e.getMessage());</span>
+        }
+    }
+
+    @Async(&quot;executor&quot;)
+    @Override
+    public void createLogs(Long taskId, String date) {
+        try {
+<span class="nc" id="L194">            Thread.sleep(20000);</span>
+
+<span class="nc" id="L196">            LocalDate logDate = parseDate(date);</span>
+<span class="nc" id="L197">            validateLogFileExists(logFilePath);</span>
+<span class="nc" id="L198">            String formattedDate = logDate.format(DateTimeFormatter.ofPattern(DATE_FORMAT));</span>
+
+<span class="nc" id="L200">            List&lt;String&gt; logLines = Files.readAllLines(logFilePath);</span>
+<span class="nc" id="L201">            List&lt;String&gt; currentLogs = logLines.stream()</span>
+<span class="nc" id="L202">                    .filter(line -&gt; line.contains(formattedDate))</span>
+<span class="nc" id="L203">                    .toList();</span>
+
+<span class="nc bnc" id="L205" title="All 2 branches missed.">            if (currentLogs.isEmpty()) {</span>
+<span class="nc" id="L206">                LogObject logObject = tasks.get(taskId);</span>
+<span class="nc bnc" id="L207" title="All 2 branches missed.">                if (logObject != null) {</span>
+<span class="nc" id="L208">                    logObject.setStatus(FAIL_TEXT);</span>
+<span class="nc" id="L209">                    logObject.setErrorMessage(&quot;Нет логов за дату: &quot; + date);</span>
+                }
+<span class="nc" id="L211">                throw new NotFoundException(&quot;Нет логов за дату: &quot; + date);</span>
+            }
+
+            Path logFile;
+<span class="nc" id="L215">            String osName = System.getProperty(&quot;os.name&quot;).toLowerCase();</span>
+<span class="nc bnc" id="L216" title="All 2 branches missed.">            if (osName.contains(&quot;win&quot;)) {</span>
+<span class="nc" id="L217">                logFile = Files.createTempFile(tempDir, &quot;logs-&quot; + formattedDate, &quot;.log&quot;);</span>
+<span class="nc" id="L218">                java.io.File tempFile = logFile.toFile();</span>
+<span class="nc bnc" id="L219" title="All 4 branches missed.">                if (!tempFile.setReadable(true, true) || !tempFile.setWritable(true, true)) {</span>
+<span class="nc" id="L220">                    throw new IllegalStateException(</span>
+                            &quot;Не удалось установить права для файла: &quot;
+                                    + tempFile);
+                }
+<span class="nc bnc" id="L224" title="All 4 branches missed.">                if (tempFile.canExecute() &amp;&amp; !tempFile.setExecutable(false, false)) {</span>
+<span class="nc" id="L225">                    log.warn(</span>
+                            &quot;Не удалось удалить права на выполнение для файла: {}&quot;,
+                            tempFile);
+                }
+<span class="nc" id="L229">            } else {</span>
+<span class="nc" id="L230">                java.nio.file.attribute.FileAttribute&lt;Set&lt;PosixFilePermission&gt;&gt; attr =</span>
+<span class="nc" id="L231">                        PosixFilePermissions.asFileAttribute(</span>
+                                PosixFilePermissions
+<span class="nc" id="L233">                                        .fromString(&quot;rw-------&quot;));</span>
+<span class="nc" id="L234">                logFile = Files.createTempFile(tempDir, &quot;logs-&quot; + formattedDate, &quot;.log&quot;, attr);</span>
+            }
+
+<span class="nc" id="L237">            Files.write(logFile, currentLogs);</span>
+<span class="nc" id="L238">            logFile.toFile().deleteOnExit();</span>
+
+<span class="nc" id="L240">            LogObject task = tasks.get(taskId);</span>
+<span class="nc bnc" id="L241" title="All 2 branches missed.">            if (task != null) {</span>
+<span class="nc" id="L242">                task.setStatus(&quot;COMPLETED&quot;);</span>
+<span class="nc" id="L243">                task.setFilePath(logFile.toString());</span>
+            }
+<span class="nc" id="L245">        } catch (InvalidInputException e) {</span>
+<span class="nc" id="L246">            LogObject task = tasks.get(taskId);</span>
+
+<span class="nc" id="L248">            task.setStatus(FAIL_TEXT);</span>
+<span class="nc" id="L249">            task.setErrorMessage(e.getMessage());</span>
+<span class="nc" id="L250">            log.error(&quot;Invalid date format for taskId {}: {}&quot;, taskId, e.getMessage());</span>
+<span class="nc" id="L251">        } catch (InterruptedException e) {</span>
+<span class="nc" id="L252">            LogObject task = tasks.get(taskId);</span>
+
+<span class="nc" id="L254">            task.setStatus(FAIL_TEXT);</span>
+<span class="nc" id="L255">            task.setErrorMessage(&quot;Task interrupted&quot;);</span>
+<span class="nc" id="L256">            Thread.currentThread().interrupt();</span>
+<span class="nc" id="L257">            log.warn(&quot;Task interrupted for taskId {}&quot;, taskId);</span>
+<span class="nc" id="L258">        } catch (Exception e) {</span>
+<span class="nc" id="L259">            LogObject task = tasks.get(taskId);</span>
+
+<span class="nc" id="L261">            task.setStatus(FAIL_TEXT);</span>
+<span class="nc" id="L262">            task.setErrorMessage(&quot;Unexpected error: &quot; + e.getMessage());</span>
+<span class="nc" id="L263">            log.error(&quot;Unexpected error in createLogs for taskId {}: {}&quot;, taskId, e.getMessage());</span>
+<span class="nc" id="L264">        }</span>
+<span class="nc" id="L265">    }</span>
+
+    @Override
+    public Long createLogAsync(String date) {
+
+<span class="nc" id="L270">        parseDate(date);</span>
+
+<span class="nc" id="L272">        Long id = idCounter.getAndIncrement();</span>
+<span class="nc" id="L273">        LogObject logObject = new LogObject(id, &quot;IN_PROGRESS&quot;);</span>
+<span class="nc" id="L274">        tasks.put(id, logObject);</span>
+<span class="nc" id="L275">        executor.execute(() -&gt; createLogs(id, date));</span>
+<span class="nc" id="L276">        return id;</span>
+    }
+
+    @Override
+    public LogObject getStatus(Long taskId) {
+<span class="nc" id="L281">        LogObject obj = tasks.get(taskId);</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">        if (obj == null) {</span>
+<span class="nc" id="L283">            throw new NotFoundException(&quot;Log object not found&quot;);</span>
+        }
+<span class="nc" id="L285">        return obj;</span>
+    }
+
+    @Override
+    public ResponseEntity&lt;Resource&gt; downloadCreatedLogs(Long taskId) {
+<span class="nc" id="L290">        log.info(&quot;Запрос на скачивание логов для ID: {}&quot;, taskId);</span>
+
+<span class="nc" id="L292">        LogObject logObject = getStatus(taskId);</span>
+<span class="nc bnc" id="L293" title="All 2 branches missed.">        if (!&quot;COMPLETED&quot;.equals(logObject.getStatus())) {</span>
+<span class="nc" id="L294">            log.error(&quot;Файл логов не готов. Текущий статус: {}&quot;, logObject.getStatus());</span>
+<span class="nc" id="L295">            throw new FileNotReadyException(</span>
+                    &quot;Файл логов не готов. Текущий статус: &quot;
+<span class="nc" id="L297">                            + logObject.getStatus());</span>
+        }
+
+<span class="nc" id="L300">        Path path = Paths.get(logObject.getFilePath());</span>
+<span class="nc bnc" id="L301" title="All 2 branches missed.">        if (!Files.exists(path)) {</span>
+<span class="nc" id="L302">            log.error(&quot;Файл логов не существует по пути: {}&quot;, path);</span>
+<span class="nc" id="L303">            throw new NotFoundException(&quot;Файл логов не существует по пути: &quot; + path);</span>
+        }
+
+        try {
+<span class="nc" id="L307">            Resource resource = new UrlResource(path.toUri());</span>
+<span class="nc" id="L308">            return ResponseEntity.ok()</span>
+<span class="nc" id="L309">                    .contentType(MediaType.APPLICATION_OCTET_STREAM)</span>
+<span class="nc" id="L310">                    .header(HttpHeaders.CONTENT_DISPOSITION,</span>
+<span class="nc" id="L311">                            &quot;attachment; filename=\&quot;&quot; + resource.getFilename() + &quot;\&quot;&quot;)</span>
+<span class="nc" id="L312">                    .body(resource);</span>
+<span class="nc" id="L313">        } catch (MalformedURLException e) {</span>
+<span class="nc" id="L314">            throw new IllegalStateException(&quot;Ошибка при создании ресурса: &quot; + e.getMessage());</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

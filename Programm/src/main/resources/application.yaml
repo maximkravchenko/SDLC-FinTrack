@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/FinancyDB
+    username: postgres
+    password: ${PASSWORD_BD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+
+logging:
+  file:
+    name: log/app.log
+  level:
+    root: INFO
+    com.example.financery: DEBUG
+    org.springframework: WARN
+    org.hibernate: WARN
+    com.zaxxer.hikari: ERROR
+    org.apache.catalina: ERROR
+
+app:
+  log:
+    file:
+      path: log/app.log
+  temp:
+    dir:
+      path: D:/documents/JavaLabs/temp

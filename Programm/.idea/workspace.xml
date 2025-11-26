@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="61177b58-03a7-4eb7-a79c-545924026417" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/app.log" beforeDir="false" afterPath="$PROJECT_DIR$/log/app.log" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="AnnotationType" />
+        <option value="Interface" />
+        <option value="Exception" />
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHomeTypeForPersistence" value="WRAPPER" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 5
+}</component>
+  <component name="ProjectId" id="2wEYNnED5axo3eP7A7eTYCC787a" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Maven. [clean,test].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.Financery [clean,test,jacoco:report].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.Financery [clean,test].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.Financery [test,-X,&gt;,debug.log].executor&quot;: &quot;Run&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;Spring Boot.FinanceryApplication.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/MaxiM/Desktop/бэкап/FinancyDB_localhost-2025_04_28_09_21_07-dump.sql&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\MaxiM\\IdeaProjects\\Financery\\financery-frontend\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  },
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;postgresql&quot;
+    ]
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CreateClassDialog.RecentsKey">
+      <recent name="com.example.financery" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\MaxiM\IdeaProjects\Financery" />
+      <recent name="C:\Users\MaxiM\IdeaProjects\Financery\financery-frontend\public" />
+      <recent name="C:\Users\MaxiM\IdeaProjects\Financery\frontend\src\components" />
+    </key>
+    <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
+      <recent name="com.example.financery.service.impl" />
+    </key>
+  </component>
+  <component name="RunAnythingCache">
+    <option name="myCommands">
+      <command value="mvn clean test jacoco:report" />
+      <command value="mvn test -X &gt; debug.log" />
+      <command value="mvn clean test" />
+    </option>
+  </component>
+  <component name="RunManager">
+    <configuration name="FinanceryApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <envs>
+        <env name="PASSWORD_BD" value="admin" />
+      </envs>
+      <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
+      <module name="Financery" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.example.financery.FinanceryApplication" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-125ca727e0f0-intellij.indexing.shared.core-IU-243.24978.46" />
+        <option value="bundled-js-predefined-d6986cc7102b-76f8388c3a79-JavaScript-IU-243.24978.46" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="61177b58-03a7-4eb7-a79c-545924026417" name="Changes" comment="" />
+      <created>1745608166024</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1745608166024</updated>
+      <workItem from="1745608167302" duration="14446000" />
+      <workItem from="1745704276261" duration="27263000" />
+      <workItem from="1745763438219" duration="39166000" />
+      <workItem from="1745819117482" duration="10848000" />
+      <workItem from="1745834741054" duration="3278000" />
+      <workItem from="1745840358753" duration="1230000" />
+      <workItem from="1745842547833" duration="377000" />
+      <workItem from="1745922273019" duration="47192000" />
+      <workItem from="1746015422092" duration="681000" />
+      <workItem from="1747256499707" duration="1442000" />
+      <workItem from="1747258365612" duration="263000" />
+      <workItem from="1747260683393" duration="981000" />
+      <workItem from="1747377432307" duration="7061000" />
+      <workItem from="1747384875539" duration="812000" />
+      <workItem from="1747393735153" duration="4131000" />
+      <workItem from="1747478533287" duration="5909000" />
+      <workItem from="1747838878760" duration="3403000" />
+      <workItem from="1747842335814" duration="4115000" />
+      <workItem from="1747851488077" duration="8357000" />
+      <workItem from="1747902556615" duration="2014000" />
+      <workItem from="1747906305266" duration="990000" />
+      <workItem from="1747912277017" duration="1559000" />
+      <workItem from="1747915595257" duration="155000" />
+      <workItem from="1747949045375" duration="2966000" />
+      <workItem from="1747954629138" duration="1082000" />
+      <workItem from="1748293769329" duration="4034000" />
+      <workItem from="1748419078909" duration="687000" />
+      <workItem from="1748420550195" duration="591000" />
+      <workItem from="1748421536367" duration="664000" />
+      <workItem from="1748422263259" duration="946000" />
+      <workItem from="1748424073245" duration="133000" />
+      <workItem from="1748430790226" duration="18000" />
+      <workItem from="1748430859248" duration="2499000" />
+      <workItem from="1748447266878" duration="19833000" />
+      <workItem from="1748512542241" duration="11146000" />
+      <workItem from="1748554690403" duration="5620000" />
+      <workItem from="1748561789040" duration="2873000" />
+      <workItem from="1748591992414" duration="3775000" />
+      <workItem from="1748596100588" duration="653000" />
+      <workItem from="1748602497832" duration="4529000" />
+      <workItem from="1749905996359" duration="281000" />
+      <workItem from="1756466884342" duration="747000" />
+      <workItem from="1757544425845" duration="7000" />
+      <workItem from="1762271189789" duration="1019000" />
+      <workItem from="1763481636281" duration="900000" />
+      <workItem from="1764196338433" duration="32000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

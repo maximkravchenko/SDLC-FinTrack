@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BillServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Financery</a> &gt; <a href="index.source.html" class="el_package">com.example.financery.service.impl</a> &gt; <span class="el_source">BillServiceImpl.java</span></div><h1>BillServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.financery.service.impl;
+
+import com.example.financery.dto.BillDtoRequest;
+import com.example.financery.dto.BillDtoResponse;
+import com.example.financery.exception.InvalidInputException;
+import com.example.financery.exception.NotFoundException;
+import com.example.financery.mapper.BillMapper;
+import com.example.financery.model.Bill;
+import com.example.financery.model.User;
+import com.example.financery.repository.BillRepository;
+import com.example.financery.repository.UserRepository;
+import com.example.financery.service.BillService;
+import java.util.ArrayList;
+import java.util.List;
+
+import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
+import org.hibernate.Hibernate;
+import org.springframework.stereotype.Service;
+
+@Service
+@AllArgsConstructor
+public class BillServiceImpl implements BillService {
+
+    private static final String USER_NOT_FOUND = &quot;Пользователь с id %d не найден&quot;;
+    private static final String BILL_NOT_FOUND = &quot;Счет с id %d не найден&quot;;
+
+    private final BillRepository billRepository;
+    private final BillMapper billMapper;
+    private final UserRepository userRepository;
+
+    @Override
+    @Transactional
+    public List&lt;BillDtoResponse&gt; getAllBills() {
+<span class="fc" id="L35">        List&lt;BillDtoResponse&gt; billsResponse = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L36">        billRepository.findAll().forEach(bill -&gt; {</span>
+<span class="fc" id="L37">            Hibernate.initialize(bill.getTransactions());</span>
+<span class="fc" id="L38">            billsResponse.add(billMapper.toBillDto(bill));</span>
+<span class="fc" id="L39">        });</span>
+<span class="fc" id="L40">        return billsResponse;</span>
+    }
+
+    @Override
+    @Transactional
+    public List&lt;BillDtoResponse&gt; getBillsByUserId(long userId) {
+<span class="fc" id="L46">        userRepository.findById(userId)</span>
+<span class="fc" id="L47">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L48">                        String.format(USER_NOT_FOUND, userId)));</span>
+<span class="fc" id="L49">        List&lt;Bill&gt; bills = billRepository.findByUser(userId);</span>
+<span class="fc" id="L50">        List&lt;BillDtoResponse&gt; billsResponse = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L52">        bills.forEach(bill -&gt; {</span>
+<span class="fc" id="L53">            Hibernate.initialize(bill.getTransactions());</span>
+<span class="fc" id="L54">            billsResponse.add(billMapper.toBillDto(bill));</span>
+<span class="fc" id="L55">        });</span>
+<span class="fc" id="L56">        return billsResponse;</span>
+    }
+
+    @Transactional
+    public BillDtoResponse getBillById(long id) {
+<span class="fc" id="L61">        Bill bill = billRepository.findById(id)</span>
+<span class="fc" id="L62">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L63">                        String.format(BILL_NOT_FOUND, id)));</span>
+<span class="fc" id="L64">        Hibernate.initialize(bill.getTransactions());</span>
+<span class="fc" id="L65">        return billMapper.toBillDto(bill);</span>
+    }
+
+    @Override
+    public BillDtoResponse createBill(BillDtoRequest billDto) {
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        if (billDto.getBalance() &lt; 0) {</span>
+<span class="fc" id="L71">            throw new InvalidInputException(</span>
+                    &quot;Баланс счёта не может быть отрицательным&quot;);
+        }
+<span class="fc bfc" id="L74" title="All 4 branches covered.">        if (billDto.getName() == null || billDto.getName().trim().isEmpty()) {</span>
+<span class="fc" id="L75">            throw new InvalidInputException(</span>
+                    &quot;Имя счёта не может быть пустым&quot;);
+        }
+
+<span class="fc" id="L79">        User user = userRepository.findById(billDto.getUserId())</span>
+<span class="fc" id="L80">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L81">                        String.format(USER_NOT_FOUND, billDto.getUserId())));</span>
+
+<span class="fc" id="L83">        Bill bill = billMapper.toBill(billDto);</span>
+
+<span class="fc" id="L85">        user.setBalance(user.getBalance() + bill.getBalance());</span>
+<span class="fc" id="L86">        bill.setUser(user);</span>
+<span class="fc" id="L87">        billRepository.save(bill);</span>
+
+<span class="fc" id="L89">        return billMapper.toBillDto(bill);</span>
+    }
+
+    @Override
+    @Transactional
+    public BillDtoResponse updateBill(long billId, BillDtoRequest billDto) {
+<span class="fc bfc" id="L95" title="All 2 branches covered.">        if (billDto.getBalance() &lt; 0) {</span>
+<span class="fc" id="L96">            throw new InvalidInputException(&quot;Баланс счёта не может быть отрицательным&quot;);</span>
+        }
+<span class="fc bfc" id="L98" title="All 4 branches covered.">        if (billDto.getName() == null || billDto.getName().trim().isEmpty()) {</span>
+<span class="fc" id="L99">            throw new InvalidInputException(&quot;Имя счёта не может быть пустым&quot;);</span>
+        }
+
+<span class="fc" id="L102">        Bill bill = billRepository.findById(billId)</span>
+<span class="fc" id="L103">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L104">                        String.format(BILL_NOT_FOUND, billId)));</span>
+
+<span class="fc" id="L106">        User user = userRepository.findById(bill.getUser().getId())</span>
+<span class="fc" id="L107">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L108">                        String.format(USER_NOT_FOUND, billDto.getUserId())));</span>
+
+<span class="fc" id="L110">        double currentBalance = bill.getBalance();</span>
+
+<span class="fc" id="L112">        bill.setName(billDto.getName());</span>
+<span class="fc" id="L113">        bill.setBalance(billDto.getBalance());</span>
+
+<span class="fc" id="L115">        double newBalance = user.getBalance() - currentBalance + billDto.getBalance();</span>
+<span class="fc" id="L116">        user.setBalance(newBalance);</span>
+
+<span class="fc" id="L118">        userRepository.save(user);</span>
+<span class="fc" id="L119">        billRepository.save(bill);</span>
+
+<span class="fc" id="L121">        return billMapper.toBillDto(bill);</span>
+    }
+
+    public void deleteBill(long billId) {
+<span class="fc" id="L125">        Bill bill = billRepository.findById(billId)</span>
+<span class="fc" id="L126">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L127">                        String.format(BILL_NOT_FOUND, billId)));</span>
+
+<span class="fc" id="L129">        User user = userRepository.findById(bill.getUser().getId())</span>
+<span class="fc" id="L130">                .orElseThrow(() -&gt; new NotFoundException(</span>
+<span class="fc" id="L131">                        String.format(USER_NOT_FOUND, bill.getUser().getId())));</span>
+
+<span class="fc" id="L133">        user.setBalance(user.getBalance() - bill.getBalance());</span>
+
+<span class="fc" id="L135">        userRepository.save(user);</span>
+<span class="fc" id="L136">        billRepository.deleteById(billId);</span>
+<span class="fc" id="L137">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

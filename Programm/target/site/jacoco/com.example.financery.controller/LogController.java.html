@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LogController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Financery</a> &gt; <a href="index.source.html" class="el_package">com.example.financery.controller</a> &gt; <span class="el_source">LogController.java</span></div><h1>LogController.java</h1><pre class="source lang-java linenums">package com.example.financery.controller;
+
+import com.example.financery.exception.InvalidInputException;
+import com.example.financery.model.LogObject;
+import com.example.financery.service.LogService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/logs&quot;)
+@Tag(name = &quot;Логи&quot;, description = &quot;API для работы с логами&quot;)
+public class LogController {
+
+    private final LogService logService;
+
+
+<span class="fc" id="L27">    public LogController(LogService logService) {</span>
+<span class="fc" id="L28">        this.logService = logService;</span>
+<span class="fc" id="L29">    }</span>
+
+    @Operation(
+            summary = &quot;Скачать лог-файл&quot;,
+            description = &quot;Возвращает .log файл с записями логов за указанную дату.&quot;
+    )
+    @GetMapping(&quot;/download&quot;)
+    public ResponseEntity&lt;Resource&gt; downloadLogFile(
+            @Parameter(description = &quot;Дата логов в формате dd-mm-yyyy&quot;,
+                    required = true, example = &quot;28-04-2025&quot;)
+            @RequestParam String date) {
+<span class="nc" id="L40">        Resource resource = logService.downloadLogs(date);</span>
+<span class="nc" id="L41">        return ResponseEntity.ok()</span>
+<span class="nc" id="L42">                .contentType(MediaType.APPLICATION_OCTET_STREAM)</span>
+<span class="nc" id="L43">                .header(HttpHeaders.CONTENT_DISPOSITION,</span>
+<span class="nc" id="L44">                        &quot;attachment; filename=\&quot;&quot; + resource.getFilename() + &quot;\&quot;&quot;)</span>
+<span class="nc" id="L45">                .body(resource);</span>
+    }
+
+    @PostMapping(&quot;/create&quot;)
+    @Operation(summary = &quot;Create log file asynchronously&quot;, description = &quot;Starts log&quot;
+            + &quot; file generation and returns an ID&quot;)
+    public ResponseEntity&lt;Long&gt; createLogFile(@RequestParam String date) {
+<span class="nc" id="L52">        Long id = logService.createLogAsync(date);</span>
+<span class="nc" id="L53">        return ResponseEntity.ok(id);</span>
+    }
+
+    @GetMapping(&quot;/status/{id}&quot;)
+    @Operation(summary = &quot;Get log generation status&quot;,
+            description = &quot;Returns the current status of log file generation by ID&quot;)
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; getStatus(@PathVariable Long id) {
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        if (id &lt; 1) {</span>
+<span class="nc" id="L61">            throw new InvalidInputException(&quot;Id must be greater than 0&quot;);</span>
+        }
+<span class="nc" id="L63">        LogObject logObject = logService.getStatus(id);</span>
+<span class="nc" id="L64">        Map&lt;String, String&gt; response = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L65">        response.put(&quot;status&quot;, logObject.getStatus());</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">        if (logObject.getErrorMessage() != null) {</span>
+<span class="nc" id="L67">            response.put(&quot;error&quot;, logObject.getErrorMessage());</span>
+        }
+<span class="nc" id="L69">        return ResponseEntity.ok(response);</span>
+    }
+
+    @GetMapping(&quot;/download/{id}&quot;)
+    @Operation(summary = &quot;Download generated log file&quot;,
+            description = &quot;Downloads the generated log file by ID&quot;)
+    public ResponseEntity&lt;Resource&gt; getLogFileById(@PathVariable Long id){
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        if (id &lt; 1) {</span>
+<span class="nc" id="L77">            throw new InvalidInputException(&quot;Id must be greater than 0&quot;);</span>
+        }
+<span class="nc" id="L79">        return logService.downloadCreatedLogs(id);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

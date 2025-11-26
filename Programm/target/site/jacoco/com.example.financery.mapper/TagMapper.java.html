@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TagMapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Financery</a> &gt; <a href="index.source.html" class="el_package">com.example.financery.mapper</a> &gt; <span class="el_source">TagMapper.java</span></div><h1>TagMapper.java</h1><pre class="source lang-java linenums">package com.example.financery.mapper;
+
+import com.example.financery.dto.TagDtoRequest;
+import com.example.financery.dto.TagDtoResponse;
+import com.example.financery.model.Tag;
+import org.springframework.stereotype.Component;
+
+@Component
+<span class="fc" id="L9">public class TagMapper {</span>
+
+    public TagDtoResponse toTagDto(Tag tag) {
+<span class="nc" id="L12">        TagDtoResponse tagDtoResponse = new TagDtoResponse();</span>
+<span class="nc" id="L13">        tagDtoResponse.setId(tag.getId());</span>
+<span class="nc" id="L14">        tagDtoResponse.setTitle(tag.getTitle());</span>
+<span class="nc" id="L15">        tagDtoResponse.setUserId(tag.getUser().getId());</span>
+<span class="nc" id="L16">        return tagDtoResponse;</span>
+    }
+
+    public Tag toTag(TagDtoRequest tagDtoRequest) {
+<span class="nc" id="L20">        Tag tag = new Tag();</span>
+<span class="nc" id="L21">        tag.setTitle(tagDtoRequest.getTitle());</span>
+<span class="nc" id="L22">        return tag;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

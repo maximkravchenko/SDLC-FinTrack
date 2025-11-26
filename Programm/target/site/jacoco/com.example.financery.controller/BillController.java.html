@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ru"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BillController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Financery</a> &gt; <a href="index.source.html" class="el_package">com.example.financery.controller</a> &gt; <span class="el_source">BillController.java</span></div><h1>BillController.java</h1><pre class="source lang-java linenums">package com.example.financery.controller;
+
+import com.example.financery.dto.BillDtoRequest;
+import com.example.financery.dto.BillDtoResponse;
+import com.example.financery.service.BillService;
+import java.util.List;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+
+@RestController
+@RequestMapping(&quot;/bills&quot;)
+@AllArgsConstructor
+@Tag(name = &quot;Счета&quot;, description = &quot;Управление счетами пользователя&quot;)
+public class BillController {
+
+    private final BillService billService;
+
+    @Operation(
+            summary = &quot;Получение всех существующих счетов&quot;,
+            description = &quot;Возвращает список всех счетов, доступных в системе.&quot;
+    )
+    @GetMapping(&quot;/get-all-bills&quot;)
+    public List&lt;BillDtoResponse&gt; getAllBills() {
+<span class="nc" id="L33">        return billService.getAllBills();</span>
+    }
+
+    @Operation(
+            summary = &quot;Получение всех счетов пользователя&quot;,
+            description =
+                    &quot;Возвращает список всех счетов,&quot;
+                            + &quot; принадлежащих пользователю с указанным ID.&quot;
+    )
+    @GetMapping(&quot;/get-all-user-bills/{userId}&quot;)
+    public List&lt;BillDtoResponse&gt; getAllUserBills(
+            @Parameter(description =
+                    &quot;ID пользователя, чьи счета необходимо получить&quot;,
+                    required = true, example = &quot;1&quot;)
+            @PathVariable long userId) {
+<span class="nc" id="L48">        return billService.getBillsByUserId(userId);</span>
+    }
+
+    @Operation(
+            summary = &quot;Получение счета по ID&quot;,
+            description = &quot;Возвращает информацию о счете с указанным ID.&quot;
+    )
+    @GetMapping(&quot;/get-bill-by-id/{billId}&quot;)
+    public ResponseEntity&lt;BillDtoResponse&gt; getBillById(
+            @Parameter(description =
+                    &quot;ID счета, который необходимо получить&quot;,
+                    required = true, example = &quot;1&quot;)
+            @PathVariable long billId) {
+<span class="nc" id="L61">        return ResponseEntity.ok(billService.getBillById(billId));</span>
+    }
+
+    @Operation(
+            summary = &quot;Создание нового счета&quot;,
+            description = &quot;Создает новый счет на основе переданных данных.&quot;
+    )
+    @PostMapping(&quot;/create&quot;)
+    public BillDtoResponse createBill(
+            @Parameter(description = &quot;Данные для создания нового счета&quot;, required = true)
+            @Valid @RequestBody BillDtoRequest billDto) {
+<span class="nc" id="L72">        return billService.createBill(billDto);</span>
+    }
+
+    @Operation(
+            summary = &quot;Обновление счета по ID&quot;,
+            description =
+                    &quot;Обновляет данные счета с указанным ID на основе переданных данных.&quot;
+    )
+    @PutMapping(&quot;/update-by-id/{billId}&quot;)
+    public BillDtoResponse updateBillById(
+            @Parameter(description =
+                    &quot;ID счета, который необходимо обновить&quot;,
+                    required = true, example = &quot;1&quot;)
+            @PathVariable long billId,
+            @Parameter(description = &quot;Обновленные данные счета&quot;, required = true)
+            @Valid @RequestBody BillDtoRequest billDto) {
+<span class="nc" id="L88">        return billService.updateBill(billId, billDto);</span>
+    }
+
+    @Operation(
+            summary = &quot;Удаление счета по ID&quot;,
+            description = &quot;Удаляет счет с указанным ID.&quot;
+    )
+    @DeleteMapping(&quot;/delete-by-id/{billId}&quot;)
+    public void deleteBillById(
+            @Parameter(description =
+                    &quot;ID счета, который необходимо удалить&quot;,
+                    required = true, example = &quot;1&quot;)
+            @PathVariable long billId) {
+<span class="nc" id="L101">        billService.deleteBill(billId);</span>
+<span class="nc" id="L102">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
